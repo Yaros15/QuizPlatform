@@ -1,6 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <File Path="test-connection1.cs" />
     <Project Path="src/QuizPlatform.API/QuizPlatform.API.csproj" />
     <Project Path="src/QuizPlatform.Domain/QuizPlatform.Domain.csproj" />
     <Project Path="src/QuizPlatform.DTO/QuizPlatform.DTO.csproj" />

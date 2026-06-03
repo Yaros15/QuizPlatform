@@ -1,6 +1,6 @@
 ﻿using Npgsql;
 
-var connectionString = "Host=localhost;Port=5432;Database=quizdb;Username=postgres;Password=ТВОЙ_ПАРОЛЬ";
+var connectionString = "Host=localhost;Port=5432;Database=quizdb;Username=postgres;Password=admin";
 
 try
 {

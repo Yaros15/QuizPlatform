@@ -18,7 +18,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // Сервисы
 builder.Services.AddControllers();
 
-// ✅ Swagger (теперь должен работать стабильно)
+// Swagger (теперь должен работать стабильно)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -30,7 +30,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ✅ Регистрация DbContext
+// Регистрация DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),

@@ -1,6 +1,15 @@
-using Serilog;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using QuizPlatform.API.Data;
+using QuizPlatform.API.Mappings;
+using QuizPlatform.API.Services;
+using QuizPlatform.API.Validators;
+using Serilog;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using QuizPlatform.API.Services.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,17 +27,43 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // Сервисы
 builder.Services.AddControllers();
 
-// Swagger (теперь должен работать стабильно)
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+// Регистрация FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+
+// Регистрация сервисов
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();  // ← Добавь эту строку
+
+// Настройка JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["Secret"]!;
+
+builder.Services.AddAuthentication(options =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        Title = "QuizPlatform API",
-        Version = "v1",
-        Description = "API для платформы квизов на .NET 8"
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        ClockSkew = TimeSpan.Zero // Убираем задержку валидации
+    };
 });
+
+// Настройка авторизации
+builder.Services.AddAuthorization();
 
 // Регистрация DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -49,6 +84,45 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Swagger с поддержкой JWT
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "QuizPlatform API",
+        Version = "v1",
+        Description = "API для платформы квизов на .NET 8"
+    });
+
+    // Добавляем определение security scheme для JWT
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Введите: Bearer <ваш-JWT-токен>"
+    });
+
+    // Добавляем security requirement
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 var app = builder.Build();
 
 // Pipeline
@@ -60,8 +134,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

@@ -4,4 +4,10 @@
     <Project Path="src/QuizPlatform.Domain/QuizPlatform.Domain.csproj" />
     <Project Path="src/QuizPlatform.DTO/QuizPlatform.DTO.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/QuizPlatform.Tests/QuizPlatform.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Элементы решения/">
+    <File Path="README.md" />
+  </Folder>
 </Solution>

@@ -142,4 +142,29 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Автоматическое применение миграций при запуске (для Docker)
+if (app.Environment.IsProduction() || app.Environment.IsEnvironment("Docker"))
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+
+    try
+    {
+        var logger = loggerFactory.CreateLogger<Program>();
+        logger.LogInformation("Applying database migrations...");
+
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
+
+        logger.LogInformation("Database migrations applied successfully!");
+    }
+    catch (Exception ex)
+    {
+        var logger = loggerFactory.CreateLogger<Program>();
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw;
+    }
+}
+
 app.Run();

@@ -1,0 +1,55 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Logs
+*.log
+logs/
+[Ll]og/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets (НИКОГДА не включать в образ!)
+appsettings.local.json
+appsettings.*.local.json
+*.key
+*.pfx
+secrets.json
+
+# Node modules (если будет фронтенд)
+node_modules/

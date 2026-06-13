@@ -1,0 +1,91 @@
+# ============================================================
+# QuizPlatform API - Docker Compose
+# ============================================================
+# Запуск приложения + PostgreSQL одной командой
+# ============================================================
+
+version: '3.8'
+
+services:
+  # --- База данных PostgreSQL ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: quiz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quizdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SecurePassword123!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - quiz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Приложение QuizPlatform API ---
+  quiz-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quiz-platform-api
+    restart: unless-stopped
+    environment:
+      # Настройки приложения
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      
+      # Подключение к базе данных
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=quizdb;Username=postgres;Password=SecurePassword123!
+      
+      # JWT настройки
+      - JwtSettings__Secret=c2VjdXJlSldUU2VjcmV0S2V5Rm9yUXVpelBsYXRmb3JtQXBwbGljYXRpb24=
+      - JwtSettings__Issuer=QuizPlatform
+      - JwtSettings__Audience=QuizPlatformUsers
+      - JwtSettings__ExpirationInMinutes=1440
+    ports:
+      - "8080:8080"   # HTTP
+      - "8081:8081"   # HTTPS (опционально)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quiz-network
+    volumes:
+      - app_logs:/app/logs
+
+  # --- pgAdmin (опционально, для администрирования БД) ---
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: quiz-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@quizplatform.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - quiz-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+# --- Сети ---
+networks:
+  quiz-network:
+    driver: bridge
+
+# --- Тома для сохранения данных ---
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  app_logs:
+    driver: local

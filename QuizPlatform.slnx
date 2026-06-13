@@ -8,6 +8,9 @@
     <Project Path="tests/QuizPlatform.Tests/QuizPlatform.Tests.csproj" />
   </Folder>
   <Folder Name="/Элементы решения/">
+    <File Path=".dockerignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
     <File Path="README.md" />
   </Folder>
 </Solution>
